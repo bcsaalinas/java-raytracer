@@ -9,13 +9,17 @@ public class Camera {
     private final Vector3D position;
     private final int width;
     private final int height;
-    private final double fov; // field of view in degrees
+    private final double fov;
+    private final double near; // minimum distance to consider a hit
+    private final double far;  // maximum distance to consider a hit
 
-    public Camera(Vector3D position, int width, int height, double fov) {
+    public Camera(Vector3D position, int width, int height, double fov, double near, double far) {
         this.position = position;
         this.width    = width;
         this.height   = height;
         this.fov      = fov;
+        this.near     = near;
+        this.far      = far;
     }
 
     // maps a pixel to a ray in world space using perspective projection
@@ -30,15 +34,9 @@ public class Camera {
         return new Ray(position, new Vector3D(x, y, 1.0));
     }
 
-    public Vector3D getPosition() {
-        return position;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
+    public Vector3D getPosition() { return position; }
+    public int getWidth()         { return width; }
+    public int getHeight()        { return height; }
+    public double getNear()       { return near; }
+    public double getFar()        { return far; }
 }

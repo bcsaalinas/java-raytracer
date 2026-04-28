@@ -11,7 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-//shoots rays through every pixel and paints the result into an image
+// shoots rays through every pixel and paints the result into an image
 public class Raytracer {
 
     private final Scene scene;
@@ -34,13 +34,20 @@ public class Raytracer {
         return image;
     }
 
-    //returns the color of whatever the ray hits first, or the background color
+    // returns the color of the closest object the ray hits within [near, far],
+    // or the background color if nothing is hit
     private Color trace(Ray ray) {
+        double near = scene.getCamera().getNear();
+        double far  = scene.getCamera().getFar();
         Intersection closest = null;
 
         for (Object3D obj : scene.getObjects()) {
             Intersection hit = obj.calculateIntersection(ray);
-            if (hit != null && (closest == null || hit.getDistance() < closest.getDistance())) {
+
+            // skip hits outside the clipping range
+            if (hit == null || hit.getDistance() < near || hit.getDistance() > far) continue;
+
+            if (closest == null || hit.getDistance() < closest.getDistance()) {
                 closest = hit;
             }
         }
