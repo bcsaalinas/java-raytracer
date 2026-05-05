@@ -13,12 +13,18 @@ public class Triangle extends Object3D {
     private static final double EPSILON = 1e-8;
 
     private final Vector3D v0, v1, v2;
+    private final Vector3D normal; // flat triangles use the same normal across the whole face
 
     public Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Color color) {
         super(v0, color);
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
+
+        // build one face normal from two triangle edges
+        Vector3D V = v1.subtract(v0);
+        Vector3D W = v0.subtract(v2);
+        this.normal = V.cross(W).normalize();
     }
 
     // Moller-Trumbore: solves where the ray meets the plane of the triangle,
@@ -48,5 +54,11 @@ public class Triangle extends Object3D {
         if (t < EPSILON) return null; // intersection is behind the ray origin
 
         return new Intersection(ray.at(t), t, this);
+    }
+
+    //flat shading uses the same normal for every point on this face
+    @Override
+    public Vector3D getNormal(Vector3D point) {
+        return normal;
     }
 }

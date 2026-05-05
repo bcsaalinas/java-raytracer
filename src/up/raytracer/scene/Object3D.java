@@ -28,4 +28,7 @@ public abstract class Object3D {
     //each shape knows how to intersect itself with a ray
     //returns null if the ray misses
     public abstract Intersection calculateIntersection(Ray ray);
+
+    // returns the surface direction used by the lighting code
+    public abstract Vector3D getNormal(Vector3D point);
 }

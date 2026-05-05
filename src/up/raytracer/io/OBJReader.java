@@ -14,6 +14,11 @@ import java.util.List;
 public class OBJReader {
 
     public static List<Triangle> load(String path, Color color) throws IOException {
+        return load(path, color, new Vector3D(0, 0, 0));
+    }
+
+    // load with an offset so the same model can be placed in different parts of the scene
+    public static List<Triangle> load(String path, Color color, Vector3D offset) throws IOException {
         List<Vector3D> vertices  = new ArrayList<>();
         List<Triangle> triangles = new ArrayList<>();
 
@@ -28,10 +33,10 @@ public class OBJReader {
                 String[] parts = line.split("\\s+");
 
                 if (parts[0].equals("v")) {
-                    // vertex: v x y z
-                    double x = Double.parseDouble(parts[1]);
-                    double y = Double.parseDouble(parts[2]);
-                    double z = Double.parseDouble(parts[3]);
+                    // vertex: v x y z, shifted by the offset before saving it
+                    double x = Double.parseDouble(parts[1]) + offset.x;
+                    double y = Double.parseDouble(parts[2]) + offset.y;
+                    double z = Double.parseDouble(parts[3]) + offset.z;
                     vertices.add(new Vector3D(x, y, z));
 
                 } else if (parts[0].equals("f")) {

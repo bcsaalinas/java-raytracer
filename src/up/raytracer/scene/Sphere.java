@@ -45,4 +45,10 @@ public class Sphere extends Object3D {
 
         return new Intersection(ray.at(t), t, this);
     }
+
+    // sphere normals point from the center to the surface point
+    @Override
+    public Vector3D getNormal(Vector3D point) {
+        return point.subtract(getPosition()).normalize();
+    }
 }

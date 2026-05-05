@@ -23,6 +23,11 @@ public class Vector3D {
         return new Vector3D(x * s, y * s, z * s);
     }
 
+    //flips the vector so we can switch between light travel direction and direction toward the light
+    public Vector3D negate() {
+        return new Vector3D(-x, -y, -z);
+    }
+
     public double dot(Vector3D v) {
         return x * v.x + y * v.y + z * v.z;
     }
