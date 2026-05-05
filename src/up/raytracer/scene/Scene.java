@@ -1,6 +1,7 @@
 package up.raytracer.scene;
 
 import up.raytracer.camera.Camera;
+import up.raytracer.light.Light;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -12,16 +13,26 @@ public class Scene {
 
     private final Camera camera;
     private final List<Object3D> objects;
+    private final List<Light> lights; // lights used to shade the objects
     private final Color backgroundColor;
 
     public Scene(Camera camera, Color backgroundColor) {
         this.camera = camera;
         this.objects = new ArrayList<>();
+        this.lights = new ArrayList<>();
         this.backgroundColor = backgroundColor;
     }
 
     public void addObject(Object3D object) {
         objects.add(object);
+    }
+
+    public void addLight(Light light) {
+        lights.add(light);
+    }
+
+    public List<Light> getLights() {
+        return Collections.unmodifiableList(lights);
     }
 
     public Camera getCamera() {
