@@ -6,29 +6,46 @@ import up.raytracer.core.Vector3D;
 
 import java.awt.Color;
 
-// a triangle defined by three vertices, using the Moller-Trumbore intersection algorithm
 public class Triangle extends Object3D {
 
-    // used to avoid division by zero and floating point noise
     private static final double EPSILON = 1e-8;
 
     private final Vector3D v0, v1, v2;
-    private final Vector3D normal; // flat triangles use the same normal across the whole face
+    private final Vector3D n0, n1, n2;
 
     public Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Color color) {
+        this(v0, v1, v2, faceNormal(v0, v1, v2), color);
+    }
+
+    private Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Vector3D faceNormal, Color color) {
+        this(v0, v1, v2, faceNormal, faceNormal, faceNormal, color);
+    }
+
+    public Triangle(
+            Vector3D v0,
+            Vector3D v1,
+            Vector3D v2,
+            Vector3D n0,
+            Vector3D n1,
+            Vector3D n2,
+            Color color
+    ) {
         super(v0, color);
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
-
-        // build one face normal from two triangle edges
-        Vector3D V = v1.subtract(v0);
-        Vector3D W = v0.subtract(v2);
-        this.normal = V.cross(W).normalize();
+        this.n0 = n0;
+        this.n1 = n1;
+        this.n2 = n2;
     }
 
-    // Moller-Trumbore: solves where the ray meets the plane of the triangle,
-    // then checks if that point is actually inside the triangle using barycentric coordinates (u, v)
+    private static Vector3D faceNormal(Vector3D v0, Vector3D v1, Vector3D v2) {
+        Vector3D edgeA = v1.subtract(v0);
+        Vector3D edgeB = v0.subtract(v2);
+        return edgeA.cross(edgeB).normalize();
+    }
+
+    // muller-trumbore ray-triangle intersection
     @Override
     public Intersection calculateIntersection(Ray ray) {
         Vector3D edge1 = v1.subtract(v0);
@@ -37,7 +54,6 @@ public class Triangle extends Object3D {
         Vector3D p   = ray.getDirection().cross(edge1);
         double   det = edge2.dot(p);
 
-        // ray is parallel to the triangle, no intersection
         if (Math.abs(det) < EPSILON) return null;
 
         double   invDet = 1.0 / det;
@@ -51,14 +67,17 @@ public class Triangle extends Object3D {
         if (v < 0 || (u + v) > (1.0 + EPSILON)) return null;
 
         double t = invDet * q.dot(edge1);
-        if (t < EPSILON) return null; // intersection is behind the ray origin
+        if (t < EPSILON) return null;
 
-        return new Intersection(ray.at(t), t, this);
+        return new Intersection(ray.at(t), t, this, u, v);
     }
 
-    //flat shading uses the same normal for every point on this face
+    // interpolate per-vertex normals using barycentric coordinates
     @Override
-    public Vector3D getNormal(Vector3D point) {
-        return normal;
+    public Vector3D getNormal(Intersection hit) {
+        double u = hit.getU();
+        double v = hit.getV();
+        double w = 1.0 - u - v;
+        return n0.scale(w).add(n1.scale(v)).add(n2.scale(u)).normalize();
     }
 }
