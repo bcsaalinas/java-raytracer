@@ -6,7 +6,6 @@ import up.raytracer.core.Vector3D;
 
 import java.awt.Color;
 
-//base class for everything that can be placed and rendered in the scene
 public abstract class Object3D {
 
     private final Vector3D position;
@@ -25,10 +24,9 @@ public abstract class Object3D {
         return color;
     }
 
-    //each shape knows how to intersect itself with a ray
-    //returns null if the ray misses
+    // returns null if the ray misses
     public abstract Intersection calculateIntersection(Ray ray);
 
-    // returns the surface direction used by the lighting code
-    public abstract Vector3D getNormal(Vector3D point);
+    // the hit carries barycentric data for phong interpolation on triangles
+    public abstract Vector3D getNormal(Intersection hit);
 }

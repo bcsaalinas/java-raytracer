@@ -1,0 +1,25 @@
+# octahedron with smooth vertex normals
+# normals point radially outward, so phong interpolation makes 8 flat faces look like a sphere
+
+v  0.0  1.5  0.0
+v  1.5  0.0  0.0
+v  0.0  0.0 -1.5
+v -1.5  0.0  0.0
+v  0.0  0.0  1.5
+v  0.0 -1.5  0.0
+
+vn  0.0  1.0  0.0
+vn  1.0  0.0  0.0
+vn  0.0  0.0 -1.0
+vn -1.0  0.0  0.0
+vn  0.0  0.0  1.0
+vn  0.0 -1.0  0.0
+
+f 1//1 2//2 3//3
+f 1//1 3//3 4//4
+f 1//1 4//4 5//5
+f 1//1 5//5 2//2
+f 6//6 3//3 2//2
+f 6//6 4//4 3//3
+f 6//6 5//5 4//4
+f 6//6 2//2 5//5
