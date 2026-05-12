@@ -67,8 +67,8 @@ public class Raytracer {
         double r = 0.0, g = 0.0, b = 0.0;
 
         for (Light light : scene.getLights()) {
-            Vector3D L     = light.getDirectionAt(hit.getPosition()).negate();
-            double   NdotL = N.dot(L);
+            Vector3D L = light.getDirectionAt(hit.getPosition()).negate();
+            double NdotL = N.dot(L);
 
             if (NdotL <= 0) continue;
 
