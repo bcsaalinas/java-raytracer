@@ -21,4 +21,16 @@ public class PointLight extends Light{
     public Vector3D getDirectionAt(Vector3D point) {
         return point.subtract(position).normalize();
     }
+
+    public double getDistanceAt(Vector3D point) {
+        return position.subtract(point).magnitude();
+    }
+
+   @Override
+    public double getAttenuatedIntensity(Vector3D point){
+        double distance = Math.max(getDistanceAt(point), 1e-3); //safe clamp to prevent division by 0
+        return getIntensity() / (distance * distance);
+    }
+
+
 }

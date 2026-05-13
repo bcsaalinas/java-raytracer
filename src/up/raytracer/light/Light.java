@@ -27,4 +27,7 @@ public abstract class Light {
     //returns the direction the light travels at the given surface point
     //Lambert shading negates this when it needs the direction toward the light
     public abstract Vector3D getDirectionAt(Vector3D point);
+
+    public abstract double getAttenuatedIntensity(Vector3D point);
+
 }
