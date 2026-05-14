@@ -18,11 +18,11 @@ public class Main {
         Camera camera = new Camera(new Vector3D(0.0, -0.15, -1.2), 1080, 1080, 90, 0.1, 100.0);
         Scene  scene  = new Scene(camera, Color.BLACK);
 
-        scene.addLight(new PointLight(Color.white, 9.0, new Vector3D(2, 2, 7)));
+        scene.addLight(new PointLight(Color.white, 10.0, new Vector3D(-0.8, 5, 6.4)));
 
         for (Triangle t : OBJReader.load(
                 "assets/utah_teapot2.obj", //render a new obj because why not
-                new Color(255, 0, 0),
+                new Color(0, 0, 255),
                 new Vector3D(-0.8, -2.05, 7.1),
                 1.0
                 )){

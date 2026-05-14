@@ -138,6 +138,7 @@ public class Raytracer{
         for (Light light : lights) {
             Vector3D L = light.getDirectionAt(hit.getPosition()).negate();
             double NdotL = N.dot(L);
+            boolean inShadow = false;
 
             if (NdotL <= 0) continue;
 
@@ -149,9 +150,11 @@ public class Raytracer{
                 Intersection shadowHit = obj.calculateIntersection(shadowRay);
                 //set 0.001 as epsilon to avoid self-intersections
                 if (shadowHit != null && shadowHit.getDistance() > 0.001) {
-                   continue;
+                    inShadow = true;
+                    break;
                 }
             }
+            if (inShadow) continue;
 
 
             Color  lc = light.getColor();
@@ -160,6 +163,7 @@ public class Raytracer{
             g += (lc.getGreen() / 255.0) * (objectColor.getGreen() / 255.0) * li * NdotL;
             b += (lc.getBlue()  / 255.0) * (objectColor.getBlue()  / 255.0) * li * NdotL;
         }
+
 
         return new Color(clamp01(r), clamp01(g), clamp01(b));
     }
