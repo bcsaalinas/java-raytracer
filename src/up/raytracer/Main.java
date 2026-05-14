@@ -15,10 +15,10 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Camera camera = new Camera(new Vector3D(0.0, -0.15, -1.2), 1080, 1080, 90, 0.1, 1000.0);
+        Camera camera = new Camera(new Vector3D(0.0, -0.15, -1.2), 1080, 1080, 90, 0.1, 100.0);
         Scene  scene  = new Scene(camera, Color.BLACK);
 
-        scene.addLight(new PointLight(Color.white, 8.0, new Vector3D(4, -1.5, 8)));
+        scene.addLight(new PointLight(Color.white, 9.0, new Vector3D(2, 2, 7)));
 
         for (Triangle t : OBJReader.load(
                 "assets/utah_teapot2.obj", //render a new obj because why not
