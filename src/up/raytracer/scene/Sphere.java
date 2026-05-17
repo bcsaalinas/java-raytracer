@@ -4,14 +4,12 @@ import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
 
-import java.awt.Color;
-
 public class Sphere extends Object3D {
 
     private final double radius;
 
-    public Sphere(Vector3D position, double radius, Color color) {
-        super(position, color);
+    public Sphere(Vector3D position, Material material, double radius) {
+        super(position, material);
         this.radius = radius;
     }
 

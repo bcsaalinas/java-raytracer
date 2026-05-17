@@ -4,8 +4,6 @@ import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
 
-import java.awt.Color;
-
 public class Triangle extends Object3D {
 
     private static final double EPSILON = 1e-8;
@@ -13,12 +11,12 @@ public class Triangle extends Object3D {
     private final Vector3D v0, v1, v2;
     private final Vector3D n0, n1, n2;
 
-    public Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Color color) {
-        this(v0, v1, v2, faceNormal(v0, v1, v2), color);
+    public Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Material material) {
+        this(v0, v1, v2, faceNormal(v0, v1, v2), material);
     }
 
-    private Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Vector3D faceNormal, Color color) {
-        this(v0, v1, v2, faceNormal, faceNormal, faceNormal, color);
+    private Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Vector3D faceNormal, Material material) {
+        this(v0, v1, v2, faceNormal, faceNormal, faceNormal, material);
     }
 
     public Triangle(
@@ -28,9 +26,9 @@ public class Triangle extends Object3D {
             Vector3D n0,
             Vector3D n1,
             Vector3D n2,
-            Color color
+            Material material
     ) {
-        super(v0, color);
+        super(v0, material);
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;

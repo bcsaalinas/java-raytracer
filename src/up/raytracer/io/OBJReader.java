@@ -1,9 +1,9 @@
 package up.raytracer.io;
 
 import up.raytracer.core.Vector3D;
+import up.raytracer.scene.Material;
 import up.raytracer.scene.Triangle;
 
-import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,19 +14,19 @@ import java.util.Map;
 
 public class OBJReader {
 
-    public static List<Triangle> load(String path, Color color) throws IOException {
-        return load(path, color, new Vector3D(0, 0, 0), 1.0);
+    public static List<Triangle> load(String path, Material material) throws IOException {
+        return load(path, material, new Vector3D(0, 0, 0), 1.0);
     }
 
-    public static List<Triangle> load(String path, Color color, Vector3D offset) throws IOException {
-        return load(path, color, offset, 1.0);
+    public static List<Triangle> load(String path, Material material, Vector3D offset) throws IOException {
+        return load(path, material, offset, 1.0);
     }
 
-    public static List<Triangle> load(String path, Color color, Vector3D offset, double scale) throws IOException {
-        return load(path, color, offset, new Vector3D(scale, scale, scale));
+    public static List<Triangle> load(String path, Material material, Vector3D offset, double scale) throws IOException {
+        return load(path, material, offset, new Vector3D(scale, scale, scale));
     }
 
-    public static List<Triangle> load(String path, Color color, Vector3D offset, Vector3D scale) throws IOException {
+    public static List<Triangle> load(String path, Material material, Vector3D offset, Vector3D scale) throws IOException {
         List<Vector3D> vertices = new ArrayList<>();
         List<Vector3D> normals = new ArrayList<>();
         List<int[]> faceVerts = new ArrayList<>();
@@ -120,7 +120,7 @@ public class OBJReader {
                 nb = getDerivedNormal(derivedNormals, f[1], smoothingGroup, faceNormal);
                 nc = getDerivedNormal(derivedNormals, f[2], smoothingGroup, faceNormal);
             }
-            triangles.add(new Triangle(a, b, c, na, nb, nc, color));
+            triangles.add(new Triangle(a, b, c, na, nb, nc, material));
         }
 
         return triangles;

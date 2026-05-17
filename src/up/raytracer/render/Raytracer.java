@@ -1,11 +1,11 @@
 package up.raytracer.render;
 
-import com.sun.source.tree.UsesTree;
 import up.raytracer.camera.Camera;
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
 import up.raytracer.light.Light;
+import up.raytracer.scene.Material;
 import up.raytracer.scene.Object3D;
 import up.raytracer.scene.Scene;
 
@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class Raytracer{
 
@@ -127,9 +128,9 @@ public class Raytracer{
 
     // lambert diffuse with interpolated normals from the hit object
     private Color shade(Ray ray, Intersection hit, List<Light> lights) {
-        Color objectColor = hit.getObject().getColor();
+        Material material = hit.getObject().getMaterial();
+        Color objectColor = material.getColor();
         Vector3D N = hit.getObject().getNormal(hit);
-
         // keep the visible side lit even if triangle winding flips the normal
         if (N.dot(ray.getDirection()) > 0) N = N.negate();
 
@@ -153,7 +154,7 @@ public class Raytracer{
                     inShadow = true;
                     break;
                 }
-            }
+            } 
             if (inShadow) continue;
 
 
