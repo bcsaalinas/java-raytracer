@@ -5,6 +5,7 @@ import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
 import up.raytracer.light.Light;
+import up.raytracer.light.PointLight;
 import up.raytracer.scene.Material;
 import up.raytracer.scene.Object3D;
 import up.raytracer.scene.Scene;
@@ -16,9 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 public class Raytracer{
+    private static final double SHADOW_EPSILON = 1e-4;
+    private static final double AMBIENT_STRENGTH = 0.05;
 
     private final Scene scene;
     private final RenderStats stats = new RenderStats();
@@ -128,41 +130,78 @@ public class Raytracer{
 
     // lambert diffuse with interpolated normals from the hit object
     private Color shade(Ray ray, Intersection hit, List<Light> lights) {
-        Material material = hit.getObject().getMaterial();
-        Color objectColor = material.getColor();
-        Vector3D N = hit.getObject().getNormal(hit);
+        Material material = hit.getObject().getMaterial(); //object material for color and other properties
+
+        Color objectColor = material.getColor(); // actual color of the object
+
+        Vector3D N = hit.getObject().getNormal(hit); // surface normal at the hit point
+
         // keep the visible side lit even if triangle winding flips the normal
         if (N.dot(ray.getDirection()) > 0) N = N.negate();
 
-        double r = 0.0, g = 0.0, b = 0.0;
+        // small ambient term keeps scene readable while still letting specular dominate
+        double r = (objectColor.getRed() / 255.0) * AMBIENT_STRENGTH;
+        double g = (objectColor.getGreen() / 255.0) * AMBIENT_STRENGTH;
+        double b = (objectColor.getBlue() / 255.0) * AMBIENT_STRENGTH;
 
         for (Light light : lights) {
+
             Vector3D L = light.getDirectionAt(hit.getPosition()).negate();
-            double NdotL = N.dot(L);
+
+            double NdotL = N.dot(L); //lambert cosine term, also used for shadow ray direction
+
             boolean inShadow = false;
 
             if (NdotL <= 0) continue;
 
-            //shadow ray, starts at the intersection point and goes toward the light
-            Ray shadowRay = new Ray(hit.getPosition(), L);
+
+            Vector3D V = ray.getDirection().negate(); //direction from hit to camera
+            Vector3D halfVector = L.add(V); // blinn-phong half-vector
+            double halfMagnitude = halfVector.magnitude();
+            if (halfMagnitude < 1e-8) continue;
+            Vector3D H = halfVector.scale(1.0 / halfMagnitude);
+
+            // start shadow ray slightly above surface to avoid self-hit acne
+            Vector3D shadowOrigin = hit.getPosition().add(N.scale(SHADOW_EPSILON));
+            Ray shadowRay = new Ray(shadowOrigin, L);
+            double maxShadowDistance = Double.POSITIVE_INFINITY;
+            if (light instanceof PointLight pointLight) {
+                // point lights should only be blocked by objects between point and light
+                maxShadowDistance = pointLight.getDistanceAt(hit.getPosition()) - SHADOW_EPSILON;
+            }
 
             //check for shadows
             for (Object3D obj : scene.getObjects()){
+                if (obj == hit.getObject()) continue;
                 Intersection shadowHit = obj.calculateIntersection(shadowRay);
-                //set 0.001 as epsilon to avoid self-intersections
-                if (shadowHit != null && shadowHit.getDistance() > 0.001) {
+                if (shadowHit == null) continue;
+                double t = shadowHit.getDistance();
+                if (t > SHADOW_EPSILON && t < maxShadowDistance) {
                     inShadow = true;
                     break;
                 }
-            } 
+            }
+
+
             if (inShadow) continue;
 
-
             Color  lc = light.getColor();
+
+            //diffuse terms
             double li = light.getAttenuatedIntensity(hit.getPosition());
-            r += (lc.getRed()   / 255.0) * (objectColor.getRed()   / 255.0) * li * NdotL;
-            g += (lc.getGreen() / 255.0) * (objectColor.getGreen() / 255.0) * li * NdotL;
-            b += (lc.getBlue()  / 255.0) * (objectColor.getBlue()  / 255.0) * li * NdotL;
+            double diffuse = li * NdotL;
+            r += (lc.getRed() / 255.0) * (objectColor.getRed() / 255.0) * diffuse;
+            g += (lc.getGreen() / 255.0) * (objectColor.getGreen() / 255.0) * diffuse;
+            b += (lc.getBlue() / 255.0) * (objectColor.getBlue() / 255.0) * diffuse;
+
+            //specular term, theyre separated because they use different material properties, and the specular color is usually white or the light color instead of the object color
+            double shininess = material.getShininess();
+            double ks = material.getSpecularCoefficient(); //specular coefficient, how much the specular highlight contributes to the final color
+            double NdotH = N.dot(H);
+            double specular = ks * Math.pow(Math.max(NdotH, 0), shininess) * li;
+            r += (lc.getRed() / 255.0) * specular;
+            g += (lc.getGreen() / 255.0) * specular;
+            b += (lc.getBlue() / 255.0) * specular;
         }
 
 
