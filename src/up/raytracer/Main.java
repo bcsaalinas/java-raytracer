@@ -24,7 +24,9 @@ public class Main {
         scene.addLight(new PointLight(new Color(190, 210, 255), 18.0, new Vector3D(-3.2, 2.0, -1.0)));
         scene.addLight(new PointLight(new Color(170, 190, 255), 10.5, new Vector3D(0.4, 2.4, 8.0)));
 
-        // same hue, different shininess
+        Material glassMaterial = new Material(new Color(180, 225, 255), 220f, 0.04, 0.95f, 0.82, 1.50);
+
+        // opaque spheres frame the glass sphere
         scene.addObject(new Sphere(
                 new Vector3D(-1.55, -1.65, 4.7),
                 new Material(new Color(188, 44, 44), 10f, 0.2, 0.15f),
@@ -32,7 +34,7 @@ public class Main {
         ));
         scene.addObject(new Sphere(
                 new Vector3D(-0.35, -1.70, 4.95),
-                new Material(new Color(188, 44, 44), 55f, 0.5, 0.55f),
+                glassMaterial,
                 0.44
         ));
         scene.addObject(new Sphere(
