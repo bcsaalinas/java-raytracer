@@ -29,7 +29,7 @@ public class Raytracer{
     }
 
 
-    public BufferedImage render() {
+    public BufferedImage render(int depth) {
         stats.startTimer();
         Camera camera = scene.getCamera();
         List<Object3D> objects = scene.getObjects();
@@ -72,7 +72,7 @@ public class Raytracer{
                for (int y = threadStarty; y < threadEndY; y++) {
                    for (int x = 0; x < width; x++) {
                        Ray ray = camera.getRayForPixel(x, y);
-                       image.setRGB(x, y, trace(ray, near, far, objects, lights, localCounters).getRGB());
+                       image.setRGB(x, y, trace(ray, near, far, objects, lights, localCounters, depth).getRGB());
                    }
                }
                threadCounters[threadIndex][0] = localCounters[0];
@@ -108,7 +108,10 @@ public class Raytracer{
     }
 
     // trace the closest hit in the camera clip range
-    private Color trace(Ray ray, double near, double far, List<Object3D> objects, List<Light> lights, long[] localCounters) {
+    private Color trace(Ray ray, double near, double far, List<Object3D> objects, List<Light> lights, long[] localCounters, int depth) {
+        //if the ray is out of bounces, then stop 
+        if(depth <= 0) return scene.getBackgroundColor();
+
         Intersection closest = null;
 
         for (Object3D obj : objects) {
@@ -125,11 +128,11 @@ public class Raytracer{
         if (closest == null) return scene.getBackgroundColor();
 
         localCounters[1]++;
-        return shade(ray, closest, lights);
+        return shade(ray, closest, lights, depth);
     }
 
     // lambert diffuse with interpolated normals from the hit object
-    private Color shade(Ray ray, Intersection hit, List<Light> lights) {
+    private Color shade(Ray ray, Intersection hit, List<Light> lights, int depth) {
         Material material = hit.getObject().getMaterial(); //object material for color and other properties
 
         Color objectColor = material.getColor(); // actual color of the object
@@ -182,8 +185,10 @@ public class Raytracer{
                 }
             }
 
-
             if (inShadow) continue;
+
+
+
 
             Color  lc = light.getColor();
 
@@ -203,6 +208,23 @@ public class Raytracer{
             g += (lc.getGreen() / 255.0) * specular;
             b += (lc.getBlue() / 255.0) * specular;
         }
+
+        if(material.getReflectivity() > 0){
+
+            Vector3D R = ray.getDirection().subtract(N.scale(2 * ray.getDirection().dot(N))).normalize(); // perfect reflection direction
+            Ray reflectedRay = new Ray(hit.getPosition().add(N.scale(SHADOW_EPSILON)), R); // start reflected ray slightly above surface
+
+            //recursive tracing with new reflected ray
+            Color reflcolor = trace(reflectedRay, scene.getCamera().getNear(), scene.getCamera().getFar(), scene.getObjects(), scene.getLights(), new long[2], depth - 1);
+            double refl = material.getReflectivity();
+            r = (1-refl) * r + refl * (reflcolor.getRed() / 255.0);
+            g = (1-refl) * g + refl * (reflcolor.getGreen() / 255.0);
+            b = (1-refl) * b + refl * (reflcolor.getBlue() / 255.0);
+
+            return new Color(clamp01(r), clamp01(g), clamp01(b));
+        }
+
+
 
 
         return new Color(clamp01(r), clamp01(g), clamp01(b));

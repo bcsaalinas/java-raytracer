@@ -27,21 +27,21 @@ public class Main {
         // same hue, different shininess
         scene.addObject(new Sphere(
                 new Vector3D(-1.55, -1.65, 4.7),
-                new Material(new Color(188, 44, 44), 10f, 0.0, 0.15f),
+                new Material(new Color(188, 44, 44), 10f, 0.2, 0.15f),
                 0.50
         ));
         scene.addObject(new Sphere(
                 new Vector3D(-0.35, -1.70, 4.95),
-                new Material(new Color(188, 44, 44), 55f, 0.0, 0.55f),
+                new Material(new Color(188, 44, 44), 55f, 0.5, 0.55f),
                 0.44
         ));
         scene.addObject(new Sphere(
                 new Vector3D(0.74, -1.74, 5.24),
-                new Material(new Color(188, 44, 44), 190f, 0.0, 0.95f),
+                new Material(new Color(188, 44, 44), 190f, 0.5, 0.95f),
                 0.38
         ));
 
-        Material teapotMaterial = new Material(new Color(66, 74, 188), 90f, 0.0, 0.62f);
+        Material teapotMaterial = new Material(new Color(66, 74, 188), 90f, 0.7, 0.62f);
         for (Triangle t : OBJReader.load(
                 "assets/utah_teapot2.obj",
                 teapotMaterial,
@@ -62,6 +62,6 @@ public class Main {
         }
 
         Raytracer raytracer = new Raytracer(scene);
-        raytracer.saveImage(raytracer.render(), "output.png");
+        raytracer.saveImage(raytracer.render(3), "output.png");
     }
 }
