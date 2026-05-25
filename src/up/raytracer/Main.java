@@ -24,18 +24,18 @@ public class Main {
         scene.addLight(new PointLight(new Color(190, 210, 255), 18.0, new Vector3D(-3.2, 2.0, -1.0)));
         scene.addLight(new PointLight(new Color(170, 190, 255), 10.5, new Vector3D(0.4, 2.4, 8.0)));
 
-        Material glassMaterial = new Material(new Color(180, 225, 255), 220f, 0.04, 0.95f, 0.82, 1.50);
+        Material glassMaterial = new Material(new Color(235, 248, 255), 260f, 0.01, 0.75f, 0.94, 1.50);
 
-        // opaque spheres frame the glass sphere
+        // the red sphere sits behind the glass sphere to test refraction
         scene.addObject(new Sphere(
-                new Vector3D(-1.55, -1.65, 4.7),
+                new Vector3D(-0.55, -1.45, 5.45),
                 new Material(new Color(188, 44, 44), 10f, 0.2, 0.15f),
-                0.50
+                0.44
         ));
         scene.addObject(new Sphere(
-                new Vector3D(-0.35, -1.70, 4.95),
+                new Vector3D(-0.55, -1.45, 4.20),
                 glassMaterial,
-                0.44
+                0.58
         ));
         scene.addObject(new Sphere(
                 new Vector3D(0.74, -1.74, 5.24),
