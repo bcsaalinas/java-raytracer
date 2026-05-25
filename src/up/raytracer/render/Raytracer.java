@@ -137,7 +137,8 @@ public class Raytracer{
 
         Color objectColor = material.getColor(); // actual color of the object
 
-        Vector3D N = hit.getObject().getNormal(hit); // surface normal at the hit point
+        Vector3D surfaceNormal = hit.getObject().getNormal(hit); // surface normal at the hit point
+        Vector3D N = surfaceNormal;
 
         // keep the visible side lit even if triangle winding flips the normal
         if (N.dot(ray.getDirection()) > 0) N = N.negate();
@@ -209,19 +210,56 @@ public class Raytracer{
             b += (lc.getBlue() / 255.0) * specular;
         }
 
-        if(material.getReflectivity() > 0){
+        double reflectionAmount = clamp01Double(material.getReflectivity());
+        double refractionAmount = clamp01Double(material.getTransparency());
 
-            Vector3D R = ray.getDirection().subtract(N.scale(2 * ray.getDirection().dot(N))).normalize(); // perfect reflection direction
+        if (refractionAmount > 0) {
+            double fresnel = fresnel(ray.getDirection(), surfaceNormal, material.getRefractiveIndex());
+            reflectionAmount = Math.max(reflectionAmount, fresnel * refractionAmount);
+        }
+
+        Color reflectedColor = null;
+        if(reflectionAmount > 0){
+            Vector3D R = reflect(ray.getDirection(), N);
             Ray reflectedRay = new Ray(hit.getPosition().add(N.scale(SHADOW_EPSILON)), R); // start reflected ray slightly above surface
+            reflectedColor = trace(reflectedRay, scene.getCamera().getNear(), scene.getCamera().getFar(), scene.getObjects(), scene.getLights(), new long[2], depth - 1);
+        }
 
-            //recursive tracing with new reflected ray
-            Color reflcolor = trace(reflectedRay, scene.getCamera().getNear(), scene.getCamera().getFar(), scene.getObjects(), scene.getLights(), new long[2], depth - 1);
-            double refl = material.getReflectivity();
-            r = (1-refl) * r + refl * (reflcolor.getRed() / 255.0);
-            g = (1-refl) * g + refl * (reflcolor.getGreen() / 255.0);
-            b = (1-refl) * b + refl * (reflcolor.getBlue() / 255.0);
+        Color refractedColor = null;
+        if (refractionAmount > 0) {
+            Vector3D T = refract(ray.getDirection(), surfaceNormal, material.getRefractiveIndex());
+            if (T == null) {
+                reflectionAmount = clamp01Double(reflectionAmount + refractionAmount);
+                refractionAmount = 0;
+            } else {
+                Ray refractedRay = new Ray(hit.getPosition().add(T.scale(SHADOW_EPSILON)), T);
+                refractedColor = trace(refractedRay, scene.getCamera().getNear(), scene.getCamera().getFar(), scene.getObjects(), scene.getLights(), new long[2], depth - 1);
+            }
+        }
 
-            return new Color(clamp01(r), clamp01(g), clamp01(b));
+        if (reflectionAmount > 0 || refractionAmount > 0) {
+            double localAmount = Math.max(0.0, 1.0 - reflectionAmount - refractionAmount);
+            double totalAmount = localAmount + reflectionAmount + refractionAmount;
+
+            r = r * localAmount;
+            g = g * localAmount;
+            b = b * localAmount;
+
+            if (reflectedColor != null) {
+                r += (reflectedColor.getRed() / 255.0) * reflectionAmount;
+                g += (reflectedColor.getGreen() / 255.0) * reflectionAmount;
+                b += (reflectedColor.getBlue() / 255.0) * reflectionAmount;
+            }
+
+            if (refractedColor != null) {
+                r += (refractedColor.getRed() / 255.0) * refractionAmount;
+                g += (refractedColor.getGreen() / 255.0) * refractionAmount;
+                b += (refractedColor.getBlue() / 255.0) * refractionAmount;
+            }
+
+            r /= totalAmount;
+            g /= totalAmount;
+            b /= totalAmount;
         }
 
 
@@ -234,6 +272,65 @@ public class Raytracer{
         if (v < 0) return 0f;
         if (v > 1) return 1f;
         return (float) v;
+    }
+
+    private static double clamp01Double(double v) {
+        if (v < 0) return 0;
+        if (v > 1) return 1;
+        return v;
+    }
+
+    private static double clamp(double v, double min, double max) {
+        if (v < min) return min;
+        if (v > max) return max;
+        return v;
+    }
+
+    private static Vector3D reflect(Vector3D direction, Vector3D normal) {
+        return direction.subtract(normal.scale(2 * direction.dot(normal))).normalize();
+    }
+
+    private static Vector3D refract(Vector3D direction, Vector3D normal, double refractiveIndex) {
+        double etaI = 1.0;
+        double etaT = Math.max(1.0, refractiveIndex);
+        Vector3D N = normal;
+        double cosI = clamp(direction.dot(N), -1.0, 1.0);
+
+        if (cosI < 0) {
+            cosI = -cosI;
+        } else {
+            double temp = etaI;
+            etaI = etaT;
+            etaT = temp;
+            N = N.negate();
+        }
+
+        double eta = etaI / etaT;
+        double k = 1.0 - eta * eta * (1.0 - cosI * cosI);
+        if (k < 0) return null;
+
+        return direction.scale(eta).add(N.scale(eta * cosI - Math.sqrt(k))).normalize();
+    }
+
+    private static double fresnel(Vector3D direction, Vector3D normal, double refractiveIndex) {
+        double etaI = 1.0;
+        double etaT = Math.max(1.0, refractiveIndex);
+        double cosI = clamp(direction.dot(normal), -1.0, 1.0);
+
+        if (cosI > 0) {
+            double temp = etaI;
+            etaI = etaT;
+            etaT = temp;
+        }
+
+        double sinT = etaI / etaT * Math.sqrt(Math.max(0.0, 1.0 - cosI * cosI));
+        if (sinT >= 1.0) return 1.0;
+
+        double cosT = Math.sqrt(Math.max(0.0, 1.0 - sinT * sinT));
+        cosI = Math.abs(cosI);
+        double rs = ((etaT * cosI) - (etaI * cosT)) / ((etaT * cosI) + (etaI * cosT));
+        double rp = ((etaI * cosI) - (etaT * cosT)) / ((etaI * cosI) + (etaT * cosT));
+        return (rs * rs + rp * rp) / 2.0;
     }
 
     public void saveImage(BufferedImage image, String path) throws IOException {
