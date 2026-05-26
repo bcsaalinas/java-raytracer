@@ -1,5 +1,6 @@
 package up.raytracer.io;
 
+import up.raytracer.core.Transform;
 import up.raytracer.core.Vector3D;
 import up.raytracer.scene.Material;
 import up.raytracer.scene.Triangle;
@@ -15,18 +16,42 @@ import java.util.Map;
 public class OBJReader {
 
     public static List<Triangle> load(String path, Material material) throws IOException {
-        return load(path, material, new Vector3D(0, 0, 0), 1.0);
+        return load(path, material, Transform.identity());
     }
 
     public static List<Triangle> load(String path, Material material, Vector3D offset) throws IOException {
-        return load(path, material, offset, 1.0);
+        return load(path, material, Transform.fromDegrees(offset, new Vector3D(0, 0, 0), 1.0));
     }
 
     public static List<Triangle> load(String path, Material material, Vector3D offset, double scale) throws IOException {
-        return load(path, material, offset, new Vector3D(scale, scale, scale));
+        return load(path, material, Transform.fromDegrees(offset, new Vector3D(0, 0, 0), scale));
     }
 
     public static List<Triangle> load(String path, Material material, Vector3D offset, Vector3D scale) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, new Vector3D(0, 0, 0), scale));
+    }
+
+    public static List<Triangle> load(
+            String path,
+            Material material,
+            Vector3D offset,
+            Vector3D rotation,
+            double scale
+    ) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, rotation, scale));
+    }
+
+    public static List<Triangle> load(
+            String path,
+            Material material,
+            Vector3D offset,
+            Vector3D rotation,
+            Vector3D scale
+    ) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, rotation, scale));
+    }
+
+    public static List<Triangle> load(String path, Material material, Transform transform) throws IOException {
         List<Vector3D> vertices = new ArrayList<>();
         List<Vector3D> normals = new ArrayList<>();
         List<int[]> faceVerts = new ArrayList<>();
@@ -45,16 +70,16 @@ public class OBJReader {
                 String[] parts = line.split("\\s+");
 
                 if (parts[0].equals("v")) {
-                    double x = Double.parseDouble(parts[1]) * scale.x + offset.x;
-                    double y = Double.parseDouble(parts[2]) * scale.y + offset.y;
-                    double z = Double.parseDouble(parts[3]) * scale.z + offset.z;
-                    vertices.add(new Vector3D(x, y, z));
+                    double x = Double.parseDouble(parts[1]);
+                    double y = Double.parseDouble(parts[2]);
+                    double z = Double.parseDouble(parts[3]);
+                    vertices.add(transform.applyToPoint(new Vector3D(x, y, z)));
 
                 } else if (parts[0].equals("vn")) {
-                    double x = Double.parseDouble(parts[1]) * scale.x;
-                    double y = Double.parseDouble(parts[2]) * scale.y;
-                    double z = Double.parseDouble(parts[3]) * scale.z;
-                    normals.add(new Vector3D(x, y, z).normalize());
+                    double x = Double.parseDouble(parts[1]);
+                    double y = Double.parseDouble(parts[2]);
+                    double z = Double.parseDouble(parts[3]);
+                    normals.add(transform.applyToNormal(new Vector3D(x, y, z)));
 
                 } else if (parts[0].equals("f")) {
                     int tokenCount = parts.length - 1;
