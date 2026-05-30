@@ -1,5 +1,6 @@
 package up.raytracer.scene;
 
+import up.raytracer.core.AABB;
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
@@ -77,5 +78,19 @@ public class Triangle extends Object3D {
         double v = hit.getV();
         double w = 1.0 - u - v;
         return n0.scale(w).add(n1.scale(v)).add(n2.scale(u)).normalize();
+    }
+
+    @Override
+    public AABB getBounds() {
+        double minX = Math.min(v0.x, Math.min(v1.x, v2.x));
+        double minY = Math.min(v0.y, Math.min(v1.y, v2.y));
+        double minZ = Math.min(v0.z, Math.min(v1.z, v2.z));
+        double maxX = Math.max(v0.x, Math.max(v1.x, v2.x));
+        double maxY = Math.max(v0.y, Math.max(v1.y, v2.y));
+        double maxZ = Math.max(v0.z, Math.max(v1.z, v2.z));
+
+        Vector3D min = new Vector3D(minX - EPSILON, minY - EPSILON, minZ - EPSILON);
+        Vector3D max = new Vector3D(maxX + EPSILON, maxY + EPSILON, maxZ + EPSILON);
+        return new AABB(min, max);
     }
 }

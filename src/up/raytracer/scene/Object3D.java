@@ -1,5 +1,6 @@
 package up.raytracer.scene;
 
+import up.raytracer.core.AABB;
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
@@ -27,4 +28,7 @@ public abstract class Object3D {
 
     // the hit carries barycentric data for phong interpolation on triangles
     public abstract Vector3D getNormal(Intersection hit);
+
+    // used by the bvh to skip objects the ray cannot reach
+    public abstract AABB getBounds();
 }

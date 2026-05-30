@@ -3,8 +3,7 @@ package up.raytracer;
 import up.raytracer.camera.Camera;
 import up.raytracer.core.Vector3D;
 import up.raytracer.io.OBJReader;
-import up.raytracer.light.PointLight;
-import up.raytracer.light.SpotLight;
+import up.raytracer.light.AreaLight;
 import up.raytracer.render.Raytracer;
 import up.raytracer.scene.Material;
 import up.raytracer.scene.Scene;
@@ -21,16 +20,14 @@ public class Main {
         Scene scene = new Scene(camera, new Color(32, 36, 44));
 
         // key + fill + rim setup to make diffuse and specular terms easier to read
-        scene.addLight(new SpotLight(
-                new Color(255, 244, 228),
-                220.0,
-                new Vector3D(1.4, 3.8, 0.4),
-                new Vector3D(-1.95, -5.25, 4.4),
-                24.0,
-                46.0
+        scene.addLight(new AreaLight(
+                new Color(255, 220, 190),
+                42.0,
+                new Vector3D(-1.9, 3.0, 1.8),
+                new Vector3D(2.4, 0.0, 0.0),
+                new Vector3D(0.0, 0.0, 1.6),
+                25
         ));
-        scene.addLight(new PointLight(new Color(190, 210, 255), 8.0, new Vector3D(-3.2, 2.0, -1.0)));
-        scene.addLight(new PointLight(new Color(170, 190, 255), 5.0, new Vector3D(0.4, 2.4, 8.0)));
 
         Material glassMaterial = new Material(new Color(235, 248, 255), 260f, 0.01, 0.75f, 0.94, 1.50);
 
