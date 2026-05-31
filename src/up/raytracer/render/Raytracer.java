@@ -122,7 +122,7 @@ public class Raytracer{
         if (closest == null) return scene.getBackgroundColor();
 
         localCounters[1]++;
-        return shade(ray, closest, lights, depth);
+        return applyFog(shade(ray, closest, lights, depth), closest.getDistance());
     }
 
     // lambert diffuse with interpolated normals from the hit object
@@ -304,6 +304,21 @@ public class Raytracer{
         return bvh.isOccluded(shadowRay, maxShadowDistance, hit.getObject());
     }
 
+    private Color applyFog(Color color, double distance) {
+        if (!scene.hasFog()) return color;
+
+        // exponential fog gets denser with distance but never fully hides the object
+        double fogAmount = 1.0 - Math.exp(-scene.getFogDensity() * distance);
+        fogAmount = clamp01Double(fogAmount);
+
+        Color fogColor = scene.getFogColor();
+        double r = blend(color.getRed(), fogColor.getRed(), fogAmount);
+        double g = blend(color.getGreen(), fogColor.getGreen(), fogAmount);
+        double b = blend(color.getBlue(), fogColor.getBlue(), fogAmount);
+
+        return new Color(clamp255(r), clamp255(g), clamp255(b));
+    }
+
     private static float clamp01(double v) {
         if (v < 0) return 0f;
         if (v > 1) return 1f;
@@ -320,6 +335,16 @@ public class Raytracer{
         if (v < min) return min;
         if (v > max) return max;
         return v;
+    }
+
+    private static int clamp255(double v) {
+        if (v < 0) return 0;
+        if (v > 255) return 255;
+        return (int) Math.round(v);
+    }
+
+    private static double blend(double a, double b, double amount) {
+        return a * (1.0 - amount) + b * amount;
     }
 
     private static Vector3D reflect(Vector3D direction, Vector3D normal) {

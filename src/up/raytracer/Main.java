@@ -18,6 +18,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         Camera camera = new Camera(new Vector3D(0.0, 0.2, -3.1), 1280, 960, 42, 0.1, 100.0);
         Scene scene = new Scene(camera, new Color(32, 36, 44));
+        scene.setFog(new Color(70, 76, 88), 0.045);
 
         // key + fill + rim setup to make diffuse and specular terms easier to read
         scene.addLight(new AreaLight(
