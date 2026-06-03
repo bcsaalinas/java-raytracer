@@ -13,6 +13,8 @@ public class Triangle extends Object3D {
     private final Vector3D v0, v1, v2;
     private final Vector3D n0, n1, n2;
     private final Vector2D uv0, uv1, uv2;
+    private final Vector3D tangent;
+    private final Vector3D bitangent;
 
     public Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Material material) {
         this(v0, v1, v2, faceNormal(v0, v1, v2), material);
@@ -56,6 +58,9 @@ public class Triangle extends Object3D {
         this.uv0 = uv0;
         this.uv1 = uv1;
         this.uv2 = uv2;
+        Vector3D[] basis = calculateTangentBasis();
+        this.tangent = basis[0];
+        this.bitangent = basis[1];
     }
 
     private static Vector3D faceNormal(Vector3D v0, Vector3D v1, Vector3D v2) {
@@ -105,6 +110,47 @@ public class Triangle extends Object3D {
 
         double w = 1.0 - u - v;
         return uv0.scale(w).add(uv1.scale(v)).add(uv2.scale(u));
+    }
+
+    @Override
+    public Vector3D getTangent(Intersection hit) {
+        return tangent;
+    }
+
+    @Override
+    public Vector3D getBitangent(Intersection hit) {
+        return bitangent;
+    }
+
+    private Vector3D[] calculateTangentBasis() {
+        if (uv0 == null || uv1 == null || uv2 == null) {
+            return fallbackTangentBasis();
+        }
+
+        Vector3D edge1 = v1.subtract(v0);
+        Vector3D edge2 = v2.subtract(v0);
+        double du1 = uv1.x - uv0.x;
+        double dv1 = uv1.y - uv0.y;
+        double du2 = uv2.x - uv0.x;
+        double dv2 = uv2.y - uv0.y;
+        double determinant = du1 * dv2 - du2 * dv1;
+
+        if (Math.abs(determinant) < EPSILON) {
+            return fallbackTangentBasis();
+        }
+
+        double inv = 1.0 / determinant;
+        Vector3D tangent = edge1.scale(dv2).subtract(edge2.scale(dv1)).scale(inv).normalize();
+        Vector3D bitangent = edge2.scale(du1).subtract(edge1.scale(du2)).scale(inv).normalize();
+        return new Vector3D[] { tangent, bitangent };
+    }
+
+    private Vector3D[] fallbackTangentBasis() {
+        Vector3D normal = faceNormal(v0, v1, v2);
+        Vector3D helper = Math.abs(normal.y) < 0.9 ? new Vector3D(0, 1, 0) : new Vector3D(1, 0, 0);
+        Vector3D tangent = helper.cross(normal).normalize();
+        Vector3D bitangent = normal.cross(tangent).normalize();
+        return new Vector3D[] { tangent, bitangent };
     }
 
     @Override
