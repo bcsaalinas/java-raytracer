@@ -9,6 +9,7 @@ import up.raytracer.scene.Material;
 import up.raytracer.scene.Scene;
 import up.raytracer.scene.Sphere;
 import up.raytracer.scene.Triangle;
+import up.raytracer.texture.CheckerTexture;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -37,6 +38,8 @@ public class Main {
         Material polishedGold = Material.cookTorrance(new Color(255, 185, 80), 0.16, 1.0, 0.42);
         Material roughMetal = Material.cookTorrance(new Color(130, 145, 160), 0.58, 1.0, 0.20);
         Material glassMaterial = Material.cookTorrance(new Color(225, 250, 255), 0.05, 0.0, 0.04, 0.88, 1.50);
+        Material checkerMaterial = Material.cookTorrance(new Color(255, 255, 255), 0.48, 0.0, 0.05)
+                .withTexture(new CheckerTexture(new Color(235, 235, 220), new Color(36, 48, 72), 8));
 
         // reflective floor shows how each material handles indirect color
         for (Triangle t : OBJReader.load(
@@ -44,6 +47,17 @@ public class Main {
                 floorMaterial,
                 new Vector3D(0.0, -1.82, 6.2),
                 1.20
+        )) {
+            scene.addObject(t);
+        }
+
+        // uv panel behind the objects to test texture coordinates
+        for (Triangle t : OBJReader.load(
+                "assets/uv_panel.obj",
+                checkerMaterial,
+                new Vector3D(0.0, -0.35, 7.45),
+                new Vector3D(0, 0, 0),
+                new Vector3D(2.25, 1.10, 1.0)
         )) {
             scene.addObject(t);
         }

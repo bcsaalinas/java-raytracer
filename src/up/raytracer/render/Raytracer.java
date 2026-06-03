@@ -160,7 +160,7 @@ public class Raytracer{
     private Color shade(Ray ray, Intersection hit, List<Light> lights, int depth) {
         Material material = hit.getObject().getMaterial(); //object material for color and other properties
 
-        Color objectColor = material.getColor(); // actual color of the object
+        Color objectColor = material.getColor(hit); // actual color of the object
 
         Vector3D surfaceNormal = hit.getObject().getNormal(hit); // surface normal at the hit point
         Vector3D N = surfaceNormal;

@@ -3,6 +3,7 @@ package up.raytracer.scene;
 import up.raytracer.core.AABB;
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
+import up.raytracer.core.Vector2D;
 import up.raytracer.core.Vector3D;
 
 public class Triangle extends Object3D {
@@ -11,6 +12,7 @@ public class Triangle extends Object3D {
 
     private final Vector3D v0, v1, v2;
     private final Vector3D n0, n1, n2;
+    private final Vector2D uv0, uv1, uv2;
 
     public Triangle(Vector3D v0, Vector3D v1, Vector3D v2, Material material) {
         this(v0, v1, v2, faceNormal(v0, v1, v2), material);
@@ -29,6 +31,21 @@ public class Triangle extends Object3D {
             Vector3D n2,
             Material material
     ) {
+        this(v0, v1, v2, n0, n1, n2, null, null, null, material);
+    }
+
+    public Triangle(
+            Vector3D v0,
+            Vector3D v1,
+            Vector3D v2,
+            Vector3D n0,
+            Vector3D n1,
+            Vector3D n2,
+            Vector2D uv0,
+            Vector2D uv1,
+            Vector2D uv2,
+            Material material
+    ) {
         super(v0, material);
         this.v0 = v0;
         this.v1 = v1;
@@ -36,6 +53,9 @@ public class Triangle extends Object3D {
         this.n0 = n0;
         this.n1 = n1;
         this.n2 = n2;
+        this.uv0 = uv0;
+        this.uv1 = uv1;
+        this.uv2 = uv2;
     }
 
     private static Vector3D faceNormal(Vector3D v0, Vector3D v1, Vector3D v2) {
@@ -68,7 +88,7 @@ public class Triangle extends Object3D {
         double t = invDet * q.dot(edge1);
         if (t < EPSILON) return null;
 
-        return new Intersection(ray.at(t), t, this, u, v);
+        return new Intersection(ray.at(t), t, this, u, v, getTextureCoordinates(u, v));
     }
 
     // interpolate per-vertex normals using barycentric coordinates
@@ -78,6 +98,13 @@ public class Triangle extends Object3D {
         double v = hit.getV();
         double w = 1.0 - u - v;
         return n0.scale(w).add(n1.scale(v)).add(n2.scale(u)).normalize();
+    }
+
+    private Vector2D getTextureCoordinates(double u, double v) {
+        if (uv0 == null || uv1 == null || uv2 == null) return null;
+
+        double w = 1.0 - u - v;
+        return uv0.scale(w).add(uv1.scale(v)).add(uv2.scale(u));
     }
 
     @Override

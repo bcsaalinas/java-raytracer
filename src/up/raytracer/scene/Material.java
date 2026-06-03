@@ -1,5 +1,9 @@
 package up.raytracer.scene;
 
+import up.raytracer.core.Intersection;
+import up.raytracer.core.Vector2D;
+import up.raytracer.texture.Texture;
+
 import java.awt.*;
 
 public class Material {
@@ -12,6 +16,7 @@ public class Material {
     private final double roughness;
     private final double metallic;
     private final boolean cookTorrance;
+    private Texture texture;
 
     public Material(Color color, float shininess, double reflectivity, float specularCoefficient) {
         this(color, shininess, reflectivity, specularCoefficient, 0.0, 1.0);
@@ -48,6 +53,7 @@ public class Material {
         this.roughness = clamp(roughness, 0.02, 1.0);
         this.metallic = clamp(metallic, 0.0, 1.0);
         this.cookTorrance = cookTorrance;
+        this.texture = null;
     }
 
     public static Material cookTorrance(Color color, double roughness, double metallic, double reflectivity) {
@@ -68,6 +74,18 @@ public class Material {
 
     public Color getColor() {
         return color;
+    }
+
+    public Color getColor(Intersection hit) {
+        if (texture == null || !hit.hasTextureCoordinates()) return color;
+
+        Vector2D uv = hit.getTextureCoordinates();
+        return texture.sample(uv.x, uv.y);
+    }
+
+    public Material withTexture(Texture texture) {
+        this.texture = texture;
+        return this;
     }
 
     public float getShininess() {
