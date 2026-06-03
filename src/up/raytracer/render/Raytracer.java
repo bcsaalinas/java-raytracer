@@ -42,8 +42,9 @@ public class Raytracer{
 
         int width  = camera.getWidth();
         int height = camera.getHeight();
+        int lensSamples = camera.getLensSamples();
         stats.setTotalPixels(width, height);
-        stats.setRaysCast((long) width * height);
+        stats.setRaysCast((long) width * height * lensSamples);
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         //amount of threads to use
         int threadCount = Runtime.getRuntime().availableProcessors();
@@ -76,8 +77,7 @@ public class Raytracer{
                long[] localCounters = new long[] {0L, 0L}; // [tested, found]
                for (int y = threadStarty; y < threadEndY; y++) {
                    for (int x = 0; x < width; x++) {
-                       Ray ray = camera.getRayForPixel(x, y);
-                       image.setRGB(x, y, trace(ray, near, far, lights, localCounters, depth).getRGB());
+                       image.setRGB(x, y, renderPixel(camera, x, y, near, far, lights, localCounters, depth).getRGB());
                    }
                }
                threadCounters[threadIndex][0] = localCounters[0];
@@ -110,6 +110,37 @@ public class Raytracer{
         stats.stopTimer();
         System.out.println(stats);
         return image;
+    }
+
+    private Color renderPixel(
+            Camera camera,
+            int x,
+            int y,
+            double near,
+            double far,
+            List<Light> lights,
+            long[] localCounters,
+            int depth
+    ) {
+        double r = 0.0;
+        double g = 0.0;
+        double b = 0.0;
+        int samples = camera.getLensSamples();
+
+        // average several lens rays so only the focal distance stays sharp
+        for (int i = 0; i < samples; i++) {
+            Ray ray = camera.getRayForPixel(x, y, i);
+            Color color = trace(ray, near, far, lights, localCounters, depth);
+            r += color.getRed();
+            g += color.getGreen();
+            b += color.getBlue();
+        }
+
+        return new Color(
+                clamp255(r / samples),
+                clamp255(g / samples),
+                clamp255(b / samples)
+        );
     }
 
     // trace the closest hit in the camera clip range
