@@ -2,6 +2,7 @@ package up.raytracer.scene;
 
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Vector2D;
+import up.raytracer.core.Vector3D;
 import up.raytracer.texture.Texture;
 
 import java.awt.*;
@@ -17,6 +18,7 @@ public class Material {
     private final double metallic;
     private final boolean cookTorrance;
     private Texture texture;
+    private Texture normalMap;
 
     public Material(Color color, float shininess, double reflectivity, float specularCoefficient) {
         this(color, shininess, reflectivity, specularCoefficient, 0.0, 1.0);
@@ -54,6 +56,7 @@ public class Material {
         this.metallic = clamp(metallic, 0.0, 1.0);
         this.cookTorrance = cookTorrance;
         this.texture = null;
+        this.normalMap = null;
     }
 
     public static Material cookTorrance(Color color, double roughness, double metallic, double reflectivity) {
@@ -86,6 +89,32 @@ public class Material {
     public Material withTexture(Texture texture) {
         this.texture = texture;
         return this;
+    }
+
+    public Material withNormalMap(Texture normalMap) {
+        this.normalMap = normalMap;
+        return this;
+    }
+
+    public Vector3D getNormal(Intersection hit, Vector3D surfaceNormal) {
+        if (normalMap == null || !hit.hasTextureCoordinates()) return surfaceNormal;
+
+        Vector3D tangent = hit.getObject().getTangent(hit);
+        Vector3D bitangent = hit.getObject().getBitangent(hit);
+        if (tangent == null || bitangent == null) return surfaceNormal;
+
+        Vector2D uv = hit.getTextureCoordinates();
+        Color sample = normalMap.sample(uv.x, uv.y);
+
+        double x = sample.getRed() / 255.0 * 2.0 - 1.0;
+        double y = sample.getGreen() / 255.0 * 2.0 - 1.0;
+        double z = sample.getBlue() / 255.0 * 2.0 - 1.0;
+
+        // tangent-space normals are moved into world space with the triangle basis
+        return tangent.scale(x)
+                .add(bitangent.scale(y))
+                .add(surfaceNormal.scale(z))
+                .normalize();
     }
 
     public float getShininess() {
