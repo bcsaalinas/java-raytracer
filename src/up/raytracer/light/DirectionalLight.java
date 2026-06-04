@@ -4,6 +4,8 @@ import up.raytracer.core.Vector3D;
 
 import java.awt.Color;
 
+
+
 //directional light acts like sunlight, with parallel rays everywhere in the scene
 public class DirectionalLight extends Light {
 
@@ -19,4 +21,10 @@ public class DirectionalLight extends Light {
     public Vector3D getDirectionAt(Vector3D point) {
         return direction;
     }
+
+   @Override
+   public double getAttenuatedIntensity(Vector3D point){
+    return getIntensity(); // no attenuation for directional light
+   }
+
 }

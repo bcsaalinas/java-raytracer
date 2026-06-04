@@ -28,3 +28,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Blender scene assets ###
+assets/blender_scenes/

@@ -1,10 +1,13 @@
 package up.raytracer.io;
 
+import up.raytracer.core.Transform;
+import up.raytracer.core.Vector2D;
 import up.raytracer.core.Vector3D;
+import up.raytracer.scene.Material;
 import up.raytracer.scene.Triangle;
 
-import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,24 +17,54 @@ import java.util.Map;
 
 public class OBJReader {
 
-    public static List<Triangle> load(String path, Color color) throws IOException {
-        return load(path, color, new Vector3D(0, 0, 0), 1.0);
+    public static List<Triangle> load(String path, Material material) throws IOException {
+        return load(path, material, Transform.identity());
     }
 
-    public static List<Triangle> load(String path, Color color, Vector3D offset) throws IOException {
-        return load(path, color, offset, 1.0);
+    public static List<Triangle> load(String path, Material material, Vector3D offset) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, new Vector3D(0, 0, 0), 1.0));
     }
 
-    public static List<Triangle> load(String path, Color color, Vector3D offset, double scale) throws IOException {
-        return load(path, color, offset, new Vector3D(scale, scale, scale));
+    public static List<Triangle> load(String path, Material material, Vector3D offset, double scale) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, new Vector3D(0, 0, 0), scale));
     }
 
-    public static List<Triangle> load(String path, Color color, Vector3D offset, Vector3D scale) throws IOException {
+    public static List<Triangle> load(String path, Material material, Vector3D offset, Vector3D scale) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, new Vector3D(0, 0, 0), scale));
+    }
+
+    public static List<Triangle> load(
+            String path,
+            Material material,
+            Vector3D offset,
+            Vector3D rotation,
+            double scale
+    ) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, rotation, scale));
+    }
+
+    public static List<Triangle> load(
+            String path,
+            Material material,
+            Vector3D offset,
+            Vector3D rotation,
+            Vector3D scale
+    ) throws IOException {
+        return load(path, material, Transform.fromDegrees(offset, rotation, scale));
+    }
+
+    public static List<Triangle> load(String path, Material material, Transform transform) throws IOException {
         List<Vector3D> vertices = new ArrayList<>();
+        List<Vector2D> uvs = new ArrayList<>();
         List<Vector3D> normals = new ArrayList<>();
         List<int[]> faceVerts = new ArrayList<>();
+        List<int[]> faceUvs = new ArrayList<>();
         List<int[]> faceNormals = new ArrayList<>();
         List<Integer> faceSmoothingGroups = new ArrayList<>();
+        List<Material> faceMaterials = new ArrayList<>();
+        Map<String, Material> materials = new HashMap<>();
+        // fallback material is used until an obj usemtl line selects another one
+        Material currentMaterial = material;
 
         int currentSmoothingGroup = 1;
 
@@ -45,26 +78,40 @@ public class OBJReader {
                 String[] parts = line.split("\\s+");
 
                 if (parts[0].equals("v")) {
-                    double x = Double.parseDouble(parts[1]) * scale.x + offset.x;
-                    double y = Double.parseDouble(parts[2]) * scale.y + offset.y;
-                    double z = Double.parseDouble(parts[3]) * scale.z + offset.z;
-                    vertices.add(new Vector3D(x, y, z));
+                    double x = Double.parseDouble(parts[1]);
+                    double y = Double.parseDouble(parts[2]);
+                    double z = Double.parseDouble(parts[3]);
+                    vertices.add(transform.applyToPoint(new Vector3D(x, y, z)));
+
+                } else if (parts[0].equals("vt")) {
+                    double u = Double.parseDouble(parts[1]);
+                    double v = Double.parseDouble(parts[2]);
+                    uvs.add(new Vector2D(u, v));
 
                 } else if (parts[0].equals("vn")) {
-                    double x = Double.parseDouble(parts[1]) * scale.x;
-                    double y = Double.parseDouble(parts[2]) * scale.y;
-                    double z = Double.parseDouble(parts[3]) * scale.z;
-                    normals.add(new Vector3D(x, y, z).normalize());
+                    double x = Double.parseDouble(parts[1]);
+                    double y = Double.parseDouble(parts[2]);
+                    double z = Double.parseDouble(parts[3]);
+                    normals.add(transform.applyToNormal(new Vector3D(x, y, z)));
 
                 } else if (parts[0].equals("f")) {
                     int tokenCount = parts.length - 1;
                     int[] vIdx = new int[tokenCount];
+                    int[] uvIdx = new int[tokenCount];
                     int[] nIdx = new int[tokenCount];
+                    boolean haveAllUvs = true;
                     boolean haveAllNormals = true;
 
                     for (int i = 0; i < tokenCount; i++) {
                         String[] sub = parts[i + 1].split("/");
                         vIdx[i] = Integer.parseInt(sub[0]) - 1;
+                        if (sub.length >= 2 && !sub[1].isEmpty()) {
+                            uvIdx[i] = Integer.parseInt(sub[1]) - 1;
+                        } else {
+                            uvIdx[i] = -1;
+                            haveAllUvs = false;
+                        }
+
                         if (sub.length >= 3 && !sub[2].isEmpty()) {
                             nIdx[i] = Integer.parseInt(sub[2]) - 1;
                         } else {
@@ -75,11 +122,24 @@ public class OBJReader {
 
                     for (int i = 1; i < tokenCount - 1; i++) {
                         faceVerts.add(new int[] { vIdx[0], vIdx[i], vIdx[i + 1] });
+                        faceUvs.add(haveAllUvs
+                            ? new int[] { uvIdx[0], uvIdx[i], uvIdx[i + 1] }
+                            : null);
                         faceNormals.add(haveAllNormals
                             ? new int[] { nIdx[0], nIdx[i], nIdx[i + 1] }
                             : null);
                         faceSmoothingGroups.add(currentSmoothingGroup);
+                        faceMaterials.add(currentMaterial);
                     }
+
+                } else if (parts[0].equals("mtllib") && parts.length >= 2) {
+                    for (int i = 1; i < parts.length; i++) {
+                        materials.putAll(MTLReader.load(resolvePath(path, parts[i])));
+                    }
+
+                } else if (parts[0].equals("usemtl") && parts.length >= 2) {
+                    // unknown material names keep the fallback material instead of breaking import
+                    currentMaterial = materials.getOrDefault(parts[1], material);
 
                 } else if (parts[0].equals("s")) {
                     if (parts.length < 2 || parts[1].equalsIgnoreCase("off") || parts[1].equals("0")) {
@@ -120,7 +180,19 @@ public class OBJReader {
                 nb = getDerivedNormal(derivedNormals, f[1], smoothingGroup, faceNormal);
                 nc = getDerivedNormal(derivedNormals, f[2], smoothingGroup, faceNormal);
             }
-            triangles.add(new Triangle(a, b, c, na, nb, nc, color));
+
+            Vector2D uva = null;
+            Vector2D uvb = null;
+            Vector2D uvc = null;
+            int[] uv = faceUvs.get(i);
+            if (uv != null) {
+                // texture coordinates are stored per face corner, like obj expects
+                uva = uvs.get(uv[0]);
+                uvb = uvs.get(uv[1]);
+                uvc = uvs.get(uv[2]);
+            }
+
+            triangles.add(new Triangle(a, b, c, na, nb, nc, uva, uvb, uvc, faceMaterials.get(i)));
         }
 
         return triangles;
@@ -198,6 +270,13 @@ public class OBJReader {
 
     private static long normalKey(int vertexIndex, int smoothingGroup) {
         return (((long) smoothingGroup) << 32) | (vertexIndex & 0xffffffffL);
+    }
+
+    private static String resolvePath(String sourcePath, String relativePath) {
+        File source = new File(sourcePath);
+        File parent = source.getParentFile();
+        if (parent == null) return relativePath;
+        return new File(parent, relativePath).getPath();
     }
 
     private static Vector3D faceNormal(Vector3D a, Vector3D b, Vector3D c) {

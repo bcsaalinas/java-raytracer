@@ -1,17 +1,16 @@
 package up.raytracer.scene;
 
+import up.raytracer.core.AABB;
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
-
-import java.awt.Color;
 
 public class Sphere extends Object3D {
 
     private final double radius;
 
-    public Sphere(Vector3D position, double radius, Color color) {
-        super(position, color);
+    public Sphere(Vector3D position, Material material, double radius) {
+        super(position, material);
         this.radius = radius;
     }
 
@@ -43,5 +42,11 @@ public class Sphere extends Object3D {
     @Override
     public Vector3D getNormal(Intersection hit) {
         return hit.getPosition().subtract(getPosition()).normalize();
+    }
+
+    @Override
+    public AABB getBounds() {
+        Vector3D radiusVector = new Vector3D(radius, radius, radius);
+        return new AABB(getPosition().subtract(radiusVector), getPosition().add(radiusVector));
     }
 }

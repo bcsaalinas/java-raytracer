@@ -1,27 +1,26 @@
 package up.raytracer.scene;
 
+import up.raytracer.core.AABB;
 import up.raytracer.core.Intersection;
 import up.raytracer.core.Ray;
 import up.raytracer.core.Vector3D;
 
-import java.awt.Color;
-
 public abstract class Object3D {
 
     private final Vector3D position;
-    private final Color color;
+    private final Material material;
 
-    public Object3D(Vector3D position, Color color) {
+    public Object3D(Vector3D position, Material material) {
         this.position = position;
-        this.color = color;
+        this.material = material;
     }
 
     public Vector3D getPosition() {
         return position;
     }
 
-    public Color getColor() {
-        return color;
+    public Material getMaterial() {
+        return material;
     }
 
     // returns null if the ray misses
@@ -29,4 +28,15 @@ public abstract class Object3D {
 
     // the hit carries barycentric data for phong interpolation on triangles
     public abstract Vector3D getNormal(Intersection hit);
+
+    public Vector3D getTangent(Intersection hit) {
+        return null;
+    }
+
+    public Vector3D getBitangent(Intersection hit) {
+        return null;
+    }
+
+    // used by the bvh to skip objects the ray cannot reach
+    public abstract AABB getBounds();
 }
