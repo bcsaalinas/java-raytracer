@@ -28,3 +28,19 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Oversized blender scene textures ###
+assets/blender_scenes/scene_02/textures/evening_road_01_puresky_8k.exr
+assets/blender_scenes/scene_02/textures/rocky_trail_nor_gl.png
+assets/blender_scenes/scene_02/textures/rocky_trail_diff.png
+assets/blender_scenes/scene_02/textures/rock_moss_set_02_nor_gl.png
+assets/blender_scenes/scene_02/textures/rock_moss_set_01_nor_gl.png
+assets/blender_scenes/scene_02/textures/forest_leaves_04_nor_gl.png
+
+### Oversized blender scene textures ###
+assets/blender_scenes/scene_02/textures/evening_road_01_puresky_8k.exr
+assets/blender_scenes/scene_02/textures/rocky_trail_nor_gl.png
+assets/blender_scenes/scene_02/textures/rocky_trail_diff.png
+assets/blender_scenes/scene_02/textures/rock_moss_set_02_nor_gl.png
+assets/blender_scenes/scene_02/textures/rock_moss_set_01_nor_gl.png
+assets/blender_scenes/scene_02/textures/forest_leaves_04_nor_gl.png
