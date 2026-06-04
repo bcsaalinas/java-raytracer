@@ -10,6 +10,7 @@ import up.raytracer.scene.Scene;
 import up.raytracer.scene.Sphere;
 import up.raytracer.scene.Triangle;
 import up.raytracer.texture.CheckerTexture;
+import up.raytracer.texture.WaveNormalTexture;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -39,7 +40,8 @@ public class Main {
         Material roughMetal = Material.cookTorrance(new Color(130, 145, 160), 0.58, 1.0, 0.20);
         Material glassMaterial = Material.cookTorrance(new Color(225, 250, 255), 0.05, 0.0, 0.04, 0.88, 1.50);
         Material checkerMaterial = Material.cookTorrance(new Color(255, 255, 255), 0.48, 0.0, 0.05)
-                .withTexture(new CheckerTexture(new Color(235, 235, 220), new Color(36, 48, 72), 8));
+                .withTexture(new CheckerTexture(new Color(235, 235, 220), new Color(36, 48, 72), 8))
+                .withNormalMap(new WaveNormalTexture(7.0, 0.55));
 
         // reflective floor shows how each material handles indirect color
         for (Triangle t : OBJReader.load(

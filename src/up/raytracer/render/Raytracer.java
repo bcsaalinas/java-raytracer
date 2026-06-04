@@ -162,7 +162,7 @@ public class Raytracer{
 
         Color objectColor = material.getColor(hit); // actual color of the object
 
-        Vector3D surfaceNormal = hit.getObject().getNormal(hit); // surface normal at the hit point
+        Vector3D surfaceNormal = material.getNormal(hit, hit.getObject().getNormal(hit)); // surface normal at the hit point
         Vector3D N = surfaceNormal;
 
         // keep the visible side lit even if triangle winding flips the normal

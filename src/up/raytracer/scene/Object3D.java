@@ -29,6 +29,14 @@ public abstract class Object3D {
     // the hit carries barycentric data for phong interpolation on triangles
     public abstract Vector3D getNormal(Intersection hit);
 
+    public Vector3D getTangent(Intersection hit) {
+        return null;
+    }
+
+    public Vector3D getBitangent(Intersection hit) {
+        return null;
+    }
+
     // used by the bvh to skip objects the ray cannot reach
     public abstract AABB getBounds();
 }
