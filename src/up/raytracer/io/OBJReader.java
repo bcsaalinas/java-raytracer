@@ -134,7 +134,10 @@ public class OBJReader {
 
                 } else if (parts[0].equals("mtllib") && parts.length >= 2) {
                     for (int i = 1; i < parts.length; i++) {
-                        materials.putAll(MTLReader.load(resolvePath(path, parts[i])));
+                        String materialPath = resolvePath(path, parts[i]);
+                        if (new File(materialPath).exists()) {
+                            materials.putAll(MTLReader.load(materialPath));
+                        }
                     }
 
                 } else if (parts[0].equals("usemtl") && parts.length >= 2) {
