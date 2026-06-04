@@ -193,14 +193,12 @@ public class MTLReader {
                 specular = 1.0;
                 useCookTorrance = true;
             } else if (lowerName.equals("dagger.002")) {
-                color = new Color(70, 145, 190);
-                roughness = 0.04;
-                reflectivity = 0.06;
-                transparency = Math.max(transparency, 0.48);
+                roughness = 0.10;
+                metallic = 0.20;
+                reflectivity = 0.04;
+                transparency = Math.max(transparency, 0.18);
                 refractiveIndex = Math.max(refractiveIndex, 1.45);
                 specular = 1.0;
-                texturePath = null;
-                normalMapPath = null;
                 useCookTorrance = true;
             } else if (lowerName.contains("dagger")) {
                 roughness = 0.16;
