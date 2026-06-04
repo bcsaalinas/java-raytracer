@@ -127,6 +127,7 @@ public class Triangle extends Object3D {
             return fallbackTangentBasis();
         }
 
+        // uv deltas tell us how the triangle surface maps into texture space
         Vector3D edge1 = v1.subtract(v0);
         Vector3D edge2 = v2.subtract(v0);
         double du1 = uv1.x - uv0.x;
@@ -146,6 +147,7 @@ public class Triangle extends Object3D {
     }
 
     private Vector3D[] fallbackTangentBasis() {
+        // objects without uv coordinates still need a stable basis for safety
         Vector3D normal = faceNormal(v0, v1, v2);
         Vector3D helper = Math.abs(normal.y) < 0.9 ? new Vector3D(0, 1, 0) : new Vector3D(1, 0, 0);
         Vector3D tangent = helper.cross(normal).normalize();

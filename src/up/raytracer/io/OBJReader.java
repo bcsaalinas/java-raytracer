@@ -7,6 +7,7 @@ import up.raytracer.scene.Material;
 import up.raytracer.scene.Triangle;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,6 +61,10 @@ public class OBJReader {
         List<int[]> faceUvs = new ArrayList<>();
         List<int[]> faceNormals = new ArrayList<>();
         List<Integer> faceSmoothingGroups = new ArrayList<>();
+        List<Material> faceMaterials = new ArrayList<>();
+        Map<String, Material> materials = new HashMap<>();
+        // fallback material is used until an obj usemtl line selects another one
+        Material currentMaterial = material;
 
         int currentSmoothingGroup = 1;
 
@@ -124,7 +129,17 @@ public class OBJReader {
                             ? new int[] { nIdx[0], nIdx[i], nIdx[i + 1] }
                             : null);
                         faceSmoothingGroups.add(currentSmoothingGroup);
+                        faceMaterials.add(currentMaterial);
                     }
+
+                } else if (parts[0].equals("mtllib") && parts.length >= 2) {
+                    for (int i = 1; i < parts.length; i++) {
+                        materials.putAll(MTLReader.load(resolvePath(path, parts[i])));
+                    }
+
+                } else if (parts[0].equals("usemtl") && parts.length >= 2) {
+                    // unknown material names keep the fallback material instead of breaking import
+                    currentMaterial = materials.getOrDefault(parts[1], material);
 
                 } else if (parts[0].equals("s")) {
                     if (parts.length < 2 || parts[1].equalsIgnoreCase("off") || parts[1].equals("0")) {
@@ -171,12 +186,13 @@ public class OBJReader {
             Vector2D uvc = null;
             int[] uv = faceUvs.get(i);
             if (uv != null) {
+                // texture coordinates are stored per face corner, like obj expects
                 uva = uvs.get(uv[0]);
                 uvb = uvs.get(uv[1]);
                 uvc = uvs.get(uv[2]);
             }
 
-            triangles.add(new Triangle(a, b, c, na, nb, nc, uva, uvb, uvc, material));
+            triangles.add(new Triangle(a, b, c, na, nb, nc, uva, uvb, uvc, faceMaterials.get(i)));
         }
 
         return triangles;
@@ -254,6 +270,13 @@ public class OBJReader {
 
     private static long normalKey(int vertexIndex, int smoothingGroup) {
         return (((long) smoothingGroup) << 32) | (vertexIndex & 0xffffffffL);
+    }
+
+    private static String resolvePath(String sourcePath, String relativePath) {
+        File source = new File(sourcePath);
+        File parent = source.getParentFile();
+        if (parent == null) return relativePath;
+        return new File(parent, relativePath).getPath();
     }
 
     private static Vector3D faceNormal(Vector3D a, Vector3D b, Vector3D c) {

@@ -19,6 +19,7 @@ public class ImageTexture implements Texture {
         double wrappedU = wrap(u);
         double wrappedV = wrap(v);
 
+        // image y goes downward, so v is flipped when sampling
         int x = (int) Math.floor(wrappedU * (image.getWidth() - 1));
         int y = (int) Math.floor((1.0 - wrappedV) * (image.getHeight() - 1));
 

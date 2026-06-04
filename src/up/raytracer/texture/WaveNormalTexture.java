@@ -14,6 +14,7 @@ public class WaveNormalTexture implements Texture {
 
     @Override
     public Color sample(double u, double v) {
+        // procedural normal map for testing bumps without an image file
         double waveX = Math.sin(u * frequency * Math.PI * 2.0) * strength;
         double waveY = Math.cos(v * frequency * Math.PI * 2.0) * strength;
         double z = 1.0;
@@ -27,6 +28,7 @@ public class WaveNormalTexture implements Texture {
     }
 
     private int encode(double value) {
+        // tangent-space normal components move from -1..1 into 0..255
         return (int) Math.round((value * 0.5 + 0.5) * 255.0);
     }
 }

@@ -16,6 +16,7 @@ public class CheckerTexture implements Texture {
 
     @Override
     public Color sample(double u, double v) {
+        // wrapping lets the checker repeat outside the 0..1 uv range
         int x = (int) Math.floor(wrap(u) * checks);
         int y = (int) Math.floor(wrap(v) * checks);
         return ((x + y) % 2 == 0) ? a : b;
