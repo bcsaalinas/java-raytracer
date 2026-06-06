@@ -16,82 +16,73 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Camera camera = new Camera(new Vector3D(0.0, 0.55, -4.4), 4096, 2160, 39, 0.1, 100.0, 0.075, 6.6, 9);
-        Scene scene = new Scene(camera, new Color(18, 22, 30));
-        scene.setFog(new Color(48, 58, 76), 0.035);
+        Camera camera = new Camera(new Vector3D(0.0, 0.35, -4.8), 1280, 720, 43, 0.1, 100.0, 0.035, 6.4, 5);
+        Scene scene = new Scene(camera, new Color(16, 18, 24));
+        scene.setFog(new Color(42, 48, 58), 0.020);
 
-        // large warm light above the exhibit, like a museum ceiling panel
+        // wide soft light makes roughness differences easy to compare
         scene.addLight(new AreaLight(
-                new Color(255, 232, 204),
-                70.0,
-                new Vector3D(-1.8, 3.4, 3.6),
-                new Vector3D(3.4, 0.0, 0.0),
-                new Vector3D(0.0, 0.0, 2.0),
-                36
+                new Color(255, 238, 218),
+                85.0,
+                new Vector3D(-1.6, 3.1, 1.4),
+                new Vector3D(4.8, 0.0, 0.0),
+                new Vector3D(0.0, 0.0, 2.4),
+                25
         ));
 
-        Material floorMaterial = new Material(new Color(34, 37, 42), 70f, 0.52, 0.55f);
-        Material bunnyMaterial = new Material(new Color(210, 190, 156), 110f, 0.18, 0.65f);
-        Material blueCrystal = new Material(new Color(150, 210, 255), 260f, 0.16, 0.90f, 0.62, 1.48);
-        Material redCrystal = new Material(new Color(255, 90, 86), 220f, 0.20, 0.85f, 0.45, 1.40);
-        Material pearlMaterial = new Material(new Color(245, 230, 205), 180f, 0.32, 0.80f);
-        Material shadowMaterial = new Material(new Color(44, 48, 72), 60f, 0.10, 0.35f);
+        Material floorMaterial = Material.cookTorrance(new Color(28, 30, 34), 0.24, 0.0, 0.55);
+        Material bunnyMaterial = Material.cookTorrance(new Color(210, 178, 128), 0.38, 0.0, 0.16);
+        Material matteRed = Material.cookTorrance(new Color(210, 48, 42), 0.82, 0.0, 0.02);
+        Material satinBlue = Material.cookTorrance(new Color(58, 110, 220), 0.38, 0.0, 0.12);
+        Material polishedGold = Material.cookTorrance(new Color(255, 185, 80), 0.16, 1.0, 0.42);
+        Material roughMetal = Material.cookTorrance(new Color(130, 145, 160), 0.58, 1.0, 0.20);
+        Material glassMaterial = Material.cookTorrance(new Color(225, 250, 255), 0.05, 0.0, 0.04, 0.88, 1.50);
 
-        // reflective floor for shadows, glass and silhouettes
+        // reflective floor shows how each material handles indirect color
         for (Triangle t : OBJReader.load(
                 "assets/ground_plane.obj",
                 floorMaterial,
-                new Vector3D(0.0, -1.95, 6.4),
-                1.45
+                new Vector3D(0.0, -1.82, 6.2),
+                1.20
         )) {
             scene.addObject(t);
         }
 
-        // the bunny is the main artifact in the room
+        // central non-sphere model for pbr shading on real geometry
         for (Triangle t : OBJReader.load(
                 "assets/bunny.obj",
                 bunnyMaterial,
-                new Vector3D(-0.15, -1.95, 6.05),
-                new Vector3D(0, -22, 0),
-                9.5
-        )) {
-            scene.addObject(t);
-        }
-
-        for (Triangle t : OBJReader.load(
-                "assets/octahedron.obj",
-                blueCrystal,
-                new Vector3D(-1.65, -0.80, 5.65),
-                new Vector3D(18, 30, -12),
-                0.32
-        )) {
-            scene.addObject(t);
-        }
-
-        for (Triangle t : OBJReader.load(
-                "assets/octahedron.obj",
-                redCrystal,
-                new Vector3D(1.55, -0.95, 6.10),
-                new Vector3D(-10, -28, 24),
-                0.25
+                new Vector3D(0.0, -1.82, 6.35),
+                new Vector3D(0, -18, 0),
+                8.0
         )) {
             scene.addObject(t);
         }
 
         scene.addObject(new Sphere(
-                new Vector3D(-0.95, -1.72, 4.85),
-                pearlMaterial,
-                0.34
+                new Vector3D(-2.05, -1.42, 4.95),
+                matteRed,
+                0.38
         ));
         scene.addObject(new Sphere(
-                new Vector3D(1.05, -1.70, 4.92),
-                shadowMaterial,
-                0.30
+                new Vector3D(-1.05, -1.42, 4.75),
+                satinBlue,
+                0.38
         ));
         scene.addObject(new Sphere(
-                new Vector3D(0.0, -1.45, 4.35),
-                new Material(new Color(230, 250, 255), 240f, 0.03, 0.85f, 0.90, 1.50),
-                0.42
+                new Vector3D(1.05, -1.42, 4.75),
+                polishedGold,
+                0.38
+        ));
+        scene.addObject(new Sphere(
+                new Vector3D(2.05, -1.42, 4.95),
+                roughMetal,
+                0.38
+        ));
+        scene.addObject(new Sphere(
+                new Vector3D(0.0, -1.35, 4.45),
+                glassMaterial,
+                0.46
         ));
 
         Raytracer raytracer = new Raytracer(scene);

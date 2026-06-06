@@ -301,10 +301,16 @@ public class Raytracer{
         if (isInShadow(hit, N, L, maxShadowDistance)) return new double[] {0.0, 0.0, 0.0};
 
         Vector3D V = ray.getDirection().negate();
+        double NdotV = Math.max(N.dot(V), 1e-6);
         Vector3D halfVector = L.add(V);
         double halfMagnitude = halfVector.magnitude();
         if (halfMagnitude < 1e-8) return new double[] {0.0, 0.0, 0.0};
         Vector3D H = halfVector.scale(1.0 / halfMagnitude);
+
+        // pbr materials use cook-torrance, older materials keep blinn-phong
+        if (material.usesCookTorrance()) {
+            return shadeCookTorrance(material, objectColor, light.getColor(), N, L, V, H, li, NdotL, NdotV);
+        }
 
         Color lc = light.getColor();
         double r = 0.0;
@@ -325,6 +331,77 @@ public class Raytracer{
         b += (lc.getBlue() / 255.0) * specular;
 
         return new double[] {r, g, b};
+    }
+
+    private double[] shadeCookTorrance(
+            Material material,
+            Color objectColor,
+            Color lightColor,
+            Vector3D N,
+            Vector3D L,
+            Vector3D V,
+            Vector3D H,
+            double li,
+            double NdotL,
+            double NdotV
+    ) {
+        double roughness = material.getRoughness();
+        double metallic = material.getMetallic();
+
+        double NdotH = Math.max(N.dot(H), 0.0);
+        double VdotH = Math.max(V.dot(H), 0.0);
+
+        double d = ggxDistribution(NdotH, roughness);
+        double g = smithGeometry(NdotV, NdotL, roughness);
+
+        double albedoR = objectColor.getRed() / 255.0;
+        double albedoG = objectColor.getGreen() / 255.0;
+        double albedoB = objectColor.getBlue() / 255.0;
+
+        double f0R = blend(0.04, albedoR, metallic);
+        double f0G = blend(0.04, albedoG, metallic);
+        double f0B = blend(0.04, albedoB, metallic);
+
+        double fR = schlickFresnel(VdotH, f0R);
+        double fG = schlickFresnel(VdotH, f0G);
+        double fB = schlickFresnel(VdotH, f0B);
+
+        double denominator = Math.max(4.0 * NdotV * NdotL, 1e-6);
+        double specularBase = d * g / denominator;
+        double diffuseBase = (1.0 - metallic) / Math.PI;
+        double energy = li * NdotL;
+
+        double lr = lightColor.getRed() / 255.0;
+        double lg = lightColor.getGreen() / 255.0;
+        double lb = lightColor.getBlue() / 255.0;
+
+        // cook-torrance uses fresnel to split energy between diffuse and specular
+        double r = lr * energy * ((1.0 - fR) * albedoR * diffuseBase + fR * specularBase);
+        double gg = lg * energy * ((1.0 - fG) * albedoG * diffuseBase + fG * specularBase);
+        double b = lb * energy * ((1.0 - fB) * albedoB * diffuseBase + fB * specularBase);
+
+        return new double[] {r, gg, b};
+    }
+
+    private static double ggxDistribution(double NdotH, double roughness) {
+        // ggx controls how wide or tight the microfacet highlight is
+        double a = roughness * roughness;
+        double a2 = a * a;
+        double value = NdotH * NdotH * (a2 - 1.0) + 1.0;
+        return a2 / (Math.PI * value * value);
+    }
+
+    private static double smithGeometry(double NdotV, double NdotL, double roughness) {
+        // smith geometry reduces light when microfacets block each other
+        double k = Math.pow(roughness + 1.0, 2.0) / 8.0;
+        double gv = NdotV / (NdotV * (1.0 - k) + k);
+        double gl = NdotL / (NdotL * (1.0 - k) + k);
+        return gv * gl;
+    }
+
+    private static double schlickFresnel(double cosTheta, double f0) {
+        // schlick fresnel makes grazing angles more reflective
+        return f0 + (1.0 - f0) * Math.pow(1.0 - clamp01Double(cosTheta), 5.0);
     }
 
     private boolean isInShadow(Intersection hit, Vector3D N, Vector3D L, double maxShadowDistance) {
